@@ -1,3 +1,6 @@
 [submodule "cmake"]
 	path = cmake
 	url = git://github.com/jrl-umi3218/jrl-cmakemodules.git
+[submodule "models/lwr-robot-description"]
+	path = models/lwr-robot-description
+	url = https://github.com/jcarpent/lwr-robot-description.git
