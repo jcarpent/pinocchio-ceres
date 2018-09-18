@@ -183,6 +183,12 @@ int main(int /*argc*/, char** argv)
   PlacementTask * placement_task = new PlacementTask(model,Mee_ref,ee_id);
   problem.AddParameterBlock(q_optimization.data(), (int)q_optimization.size());
   problem.AddResidualBlock(placement_task, NULL, q_optimization.data());
+  
+  for(int k = 0; k < model.nq; ++k)
+  {
+    problem.SetParameterLowerBound(q_optimization.data(), k, model.lowerPositionLimit[k]);
+    problem.SetParameterUpperBound(q_optimization.data(), k, model.upperPositionLimit[k]);
+  }
 
   // Run the solver!
   Solver::Options options;
