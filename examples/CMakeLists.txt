@@ -20,4 +20,9 @@ MACRO(ADD_EXAMPLE example_name)
   TARGET_LINK_LIBRARIES(${example_name} ${GLOG_LIBRARIES})
 ENDMACRO()
 
+# Simple example using basic Ceres examples
 ADD_EXAMPLE(ceres-hello-world) 
+
+# Examples with Pinocchio
+ADD_EXAMPLE(inverse-geometry)
+PKG_CONFIG_USE_DEPENDENCY(inverse-geometry pinocchio)
