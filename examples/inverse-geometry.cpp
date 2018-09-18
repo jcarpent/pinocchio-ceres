@@ -64,7 +64,7 @@ struct PlacementTask : ceres::CostFunction
     
     se3::MotionRef<ResidualVector> v(EIGEN_CONST_CAST(ResidualVector,residual));
     
-    // do forward kinematics over all joints
+    // do forward kinematics and compute all Jacobians for all joints
     se3::computeJointJacobians(model, own_data, q);
     
     const SE3 & Mee = own_data.oMi[ee_id];
@@ -108,7 +108,6 @@ struct PlacementTask : ceres::CostFunction
     const Eigen::Map<const ConfigVectorType> q_map(x[0],model.nq,1);
     q = q_map;
     
-    // do forward kinematics over all joints
     if(jacobians)
     {
       Evaluate(q,res,jacobian_ee);
