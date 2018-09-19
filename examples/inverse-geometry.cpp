@@ -39,6 +39,7 @@ struct PlacementTask : ceres::CostFunction
   typedef Eigen::Matrix<Scalar,Eigen::Dynamic,1> ConfigVectorType;
   typedef Eigen::Matrix<Scalar,6,1> ResidualVectorType;
   typedef se3::Data::Matrix6x JacobianType;
+  typedef Eigen::Matrix<double,6,6> Matrix6;
   
   PlacementTask(const se3::Model & model,
                 const se3::SE3 & Mee_ref,
@@ -49,6 +50,7 @@ struct PlacementTask : ceres::CostFunction
   , ee_id(ee_id)
   , q(model.nq)
   , jacobian_ee(JacobianType::Zero(6,model.nv))
+  , jacobian_residual(JacobianType::Zero(6,model.nv))
   {
     mutable_parameter_block_sizes()->push_back(model.nq);
     set_num_residuals(6);
@@ -72,7 +74,10 @@ struct PlacementTask : ceres::CostFunction
     v = se3::log6(M_relative);
     
     // Compute the geometric Jacobian of the end-effector
-    se3::getJointJacobian(model,own_data,ee_id,se3::LOCAL,EIGEN_CONST_CAST(JacobianType,jacobian));
+    se3::getJointJacobian(model,own_data,ee_id,se3::LOCAL,jacobian_ee);
+    se3::Jlog6(M_relative, Jlog);
+    
+    EIGEN_CONST_CAST(JacobianType,jacobian).noalias() = Jlog * jacobian_ee;
 
     return true;
   }
@@ -110,11 +115,11 @@ struct PlacementTask : ceres::CostFunction
     
     if(jacobians)
     {
-      Evaluate(q,res,jacobian_ee);
+      Evaluate(q,res,jacobian_residual);
       Eigen::Map<ResidualVectorType> residuals_map(residuals,6,1);
       residuals_map = res;
       Eigen::Map<EIGEN_PLAIN_ROW_MAJOR_TYPE(JacobianType)>(jacobians[0],6,model.nv)
-      = jacobian_ee;
+      = jacobian_residual;
     }
     else
     {
@@ -132,9 +137,10 @@ struct PlacementTask : ceres::CostFunction
   const SE3 Mee_ref;
   const se3::Model::JointIndex ee_id;
   
+  mutable Matrix6 Jlog;
   mutable ResidualVectorType res;
   mutable se3::Data::ConfigVectorType q;
-  mutable se3::Data::Matrix6x jacobian_ee;
+  mutable se3::Data::Matrix6x jacobian_ee, jacobian_residual;
                                
 };
 
@@ -195,17 +201,19 @@ int main(int /*argc*/, char** argv)
   options.minimizer_progress_to_stdout = true;
 //  options.check_gradients = true;
 //  options.gradient_check_numeric_derivative_relative_step_size = 1e-8;
+//  options.gradient_check_relative_precision = 1e-4;
 //  options.gradient_tolerance = 1e-4;
   
   std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(q_optimization.data());
   
-//  ceres::NumericDiffOptions numeric_diff_options;
-//  ceres::GradientChecker gradient_checker(placement_task,
-//                                          NULL, numeric_diff_options);
-//  ceres::GradientChecker::ProbeResults results;
-//  gradient_checker.Probe(parameter_blocks.data(), 1e-9, &results);
-//  std::cout << "results.error_log: " << results.error_log << std::endl;
+  ceres::NumericDiffOptions numeric_diff_options;
+  numeric_diff_options.relative_step_size = 1e-8;
+  ceres::GradientChecker gradient_checker(placement_task,
+                                          NULL, numeric_diff_options);
+  ceres::GradientChecker::ProbeResults results;
+  gradient_checker.Probe(parameter_blocks.data(), std::sqrt(numeric_diff_options.relative_step_size), &results);
+  std::cout << "gradient_checker log:" << results.error_log << std::endl;
 
   Solver::Summary summary;
   Solve(options, &problem, &summary);
