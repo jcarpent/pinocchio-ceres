@@ -223,7 +223,7 @@ int main(int /*argc*/, char** argv)
   const SE3 & Mee_final = data.oMi[ee_id];
   Motion error_final = se3::log6(Mee_final.actInv(Mee_ref));
   
-  std::cout << summary.BriefReport() << "\n";
+  std::cout << summary.FullReport() << "\n";
   std::cout << "initial configuration:\n" << q_init.transpose() << std::endl;
   std::cout << "optimal configuration:\n" << q_optimization.transpose()  << std::endl;
   std::cout << "random configuration:\n" << q_random.transpose()  << std::endl;
