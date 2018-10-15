@@ -199,6 +199,7 @@ int main(int /*argc*/, char** argv)
   Solver::Options options;
   options.linear_solver_type = ceres::DENSE_QR;
   options.minimizer_progress_to_stdout = true;
+  options.max_num_iterations = 500;
 //  options.check_gradients = true;
 //  options.gradient_check_numeric_derivative_relative_step_size = 1e-8;
 //  options.gradient_check_relative_precision = 1e-4;
