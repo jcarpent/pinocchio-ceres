@@ -30,7 +30,7 @@ namespace
     typedef double Scalar;
     enum { Options = 0 };
     
-    typedef ModelLocalParametrization<Scalar,Options> LocalParameterization;
+    typedef ModelLocalParameterization<Scalar,Options> LocalParameterization;
     typedef LocalParameterization::Model Model;
     typedef LocalParameterization::Data Data;
     
@@ -81,7 +81,7 @@ namespace
     typedef double Scalar;
     enum { Options = 0 };
     
-    typedef ModelLocalParametrization<Scalar,Options> LocalParameterization;
+    typedef ModelLocalParameterization<Scalar,Options> LocalParameterization;
     typedef LocalParameterization::Model Model;
     typedef LocalParameterization::Data Data;
     

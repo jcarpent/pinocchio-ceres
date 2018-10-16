@@ -31,7 +31,7 @@ namespace pinocchio
   {
     
     template<typename _Scalar, int _Options>
-    class ModelLocalParametrization : public ::ceres::LocalParameterization
+    class ModelLocalParameterization : public ::ceres::LocalParameterization
     {
     public:
       typedef _Scalar Scalar;
@@ -44,7 +44,7 @@ namespace pinocchio
       typedef typename Data::MatrixXs MatrixXs;
       typedef typename EIGEN_PLAIN_ROW_MAJOR_TYPE(MatrixXs) RowMatrixXs;
       
-      ModelLocalParametrization(const Model & model)
+      ModelLocalParameterization(const Model & model)
       : m_model(model)
       {}
       
@@ -73,7 +73,7 @@ namespace pinocchio
         return true;
       }
       
-      ~ModelLocalParametrization() {}
+      ~ModelLocalParameterization() {}
       
     protected:
       
