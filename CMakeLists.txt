@@ -59,7 +59,19 @@ INCLUDE_DIRECTORIES(${GLOG_INCLUDE_DIRS})
 
 ADD_DEFINITIONS(-DMODEL_DIRECTORY="${${PROJECT_NAME}_SOURCE_DIR}/models")
 
+# ----------------------------------------------------
+# --- INCLUDE ----------------------------------------
+# ----------------------------------------------------
+FILE(GLOB_RECURSE ${PROJECT_NAME}_HEADERS 
+     ${PROJECT_SOURCE_DIR}/include/pinocchio/ceres/*.hpp 
+     ${PROJECT_SOURCE_DIR}/include/pinocchio/ceres/*.hxx 
+     )   
+
+ADD_SUBDIRECTORY(src)
+
+# ----------------------------------------------------
 # --- EXAMPLES ---------------------------------------
+# ----------------------------------------------------
 ADD_SUBDIRECTORY(examples)
 
 SETUP_PROJECT_FINALIZE()
