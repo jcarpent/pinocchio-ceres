@@ -38,4 +38,8 @@ MACRO(ADD_TESTCASE test_name dependencies)
 
 ENDMACRO(ADD_TESTCASE)
 
+# Generic optimization
+ADD_TESTCASE(proximal-cost "eigen3")
+
+# Pinocchio
 ADD_TESTCASE(local-parameterization "eigen3;pinocchio;")
