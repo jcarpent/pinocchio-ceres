@@ -19,6 +19,8 @@
 #include "glog/logging.h"
 #include "ceres/gradient_checker.h"
 
+#include <pinocchio/ceres/local-parameterization.hpp>
+
 #include <pinocchio/spatial/explog.hpp>
 
 #include <pinocchio/multibody/model.hpp>
@@ -54,6 +56,7 @@ struct PlacementTask : ceres::CostFunction
   {
     mutable_parameter_block_sizes()->push_back(model.nq);
     set_num_residuals(6);
+    jacobian_expressed_relatively_to_the_tangent_ = true;
   }
 
   template<typename ConfigVectorType, typename ResidualVector, typename JacobianType>
@@ -118,7 +121,7 @@ struct PlacementTask : ceres::CostFunction
       Evaluate(q,res,jacobian_residual);
       Eigen::Map<ResidualVectorType> residuals_map(residuals,6,1);
       residuals_map = res;
-      Eigen::Map<EIGEN_PLAIN_ROW_MAJOR_TYPE(JacobianType)>(jacobians[0],6,model.nv)
+      Eigen::Map<EIGEN_PLAIN_ROW_MAJOR_TYPE(JacobianType)>(jacobians[0],6,model.nq).leftCols(model.nv)
       = jacobian_residual;
     }
     else
@@ -162,15 +165,33 @@ int main(int /*argc*/, char** argv)
   typedef Eigen::Matrix<Scalar,Eigen::Dynamic,1> ConfigVectorType;
   typedef Eigen::Matrix<Scalar,Eigen::Dynamic,1> TangentVectorType;
   
+  bool with_floating_base = false;
+  with_floating_base = true;
+  
   // Init logs
   google::InitGoogleLogging(argv[0]);
   
   // Load the robot model from URDF
   const std::string & filename = MODEL_DIRECTORY"/lwr-robot-description/lwr-robot.urdf";
   Model model; // empty model
+  
   std::cout << "Opening model: " << filename << std::endl;
-  se3::urdf::buildModel(filename, model);
+  if(with_floating_base)
+  {
+    se3::urdf::buildModel(filename, se3::JointModelFreeFlyer(), model);
+    model.lowerPositionLimit.head<7>().fill(-1.1);
+    model.upperPositionLimit.head<7>().fill( 1.1);
+  }
+  else
+    se3::urdf::buildModel(filename, model);
+  
+  std::cout << "model.nq: " << model.nq << "; model.nv: " << model.nv << std::endl;
+  
   Data data(model);
+  
+  // Define local parametrization for the model
+  typedef pinocchio::ceres::ModelLocalParameterization<Model::Scalar,Model::Options> ModelLocalParameterization;
+  ModelLocalParameterization * local_para_ptr = new ModelLocalParameterization(model);
   
   // Select random configuration
   ConfigVectorType q_random = randomConfiguration(model);
@@ -179,16 +200,18 @@ int main(int /*argc*/, char** argv)
   const SE3 Mee_ref = data.oMi[ee_id]; // reference placement of the end effector
   
   // The variable to solve for with its initial value.
-  const ConfigVectorType q_init(ConfigVectorType::Zero(model.nq));
+  const ConfigVectorType q_init = se3::neutral(model);
+  
   ConfigVectorType q_optimization = q_init;
   
   // Build the problem.
   Problem problem;
   
   PlacementTask * placement_task = new PlacementTask(model,Mee_ref,ee_id);
-  problem.AddParameterBlock(q_optimization.data(), (int)q_optimization.size());
+
+  problem.AddParameterBlock(q_optimization.data(), (int)q_optimization.size(), local_para_ptr);
   problem.AddResidualBlock(placement_task, NULL, q_optimization.data());
-  
+
   for(int k = 0; k < model.nq; ++k)
   {
     problem.SetParameterLowerBound(q_optimization.data(), k, model.lowerPositionLimit[k]);
@@ -200,36 +223,46 @@ int main(int /*argc*/, char** argv)
   options.linear_solver_type = ceres::DENSE_QR;
   options.minimizer_progress_to_stdout = true;
   options.max_num_iterations = 500;
-  options.function_tolerance = 1e-10;
+  options.function_tolerance = 1e-14;
   options.check_gradients = true;
+  options.parameter_tolerance = 1e-12;
   options.gradient_check_numeric_derivative_relative_step_size = 1e-8;
   options.gradient_check_relative_precision = 2;
+//  options.trust_region_strategy_type = ceres::DOGLEG;
+//  options.dogleg_type = ceres::SUBSPACE_DOGLEG;
+//  options.logging_type = ceres::PER_MINIMIZER_ITERATION;
 //  options.gradient_tolerance = 1e-4;
+  
   
   std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(q_optimization.data());
   
   ceres::NumericDiffOptions numeric_diff_options;
   numeric_diff_options.relative_step_size = 1e-8;
+
+  std::vector<const ceres::LocalParameterization*> problem_local_para_vector;
+  problem_local_para_vector.push_back(local_para_ptr);
   ceres::GradientChecker gradient_checker(placement_task,
-                                          NULL, numeric_diff_options);
+                                          &problem_local_para_vector, numeric_diff_options);
   ceres::GradientChecker::ProbeResults results;
-  gradient_checker.Probe(parameter_blocks.data(), std::sqrt(numeric_diff_options.relative_step_size), &results);
+  gradient_checker.Probe(parameter_blocks.data(), 1e3*std::sqrt(numeric_diff_options.relative_step_size), &results);
   std::cout << "gradient_checker log:" << results.error_log << std::endl;
+  
 
   Solver::Summary summary;
   Solve(options, &problem, &summary);
-  
+
   // Compute final error
   forwardKinematics(model, data, q_optimization);
   const SE3 & Mee_final = data.oMi[ee_id];
   Motion error_final = se3::log6(Mee_final.actInv(Mee_ref));
-  
+
   std::cout << summary.FullReport() << "\n";
   std::cout << "initial configuration:\n" << q_init.transpose() << std::endl;
   std::cout << "optimal configuration:\n" << q_optimization.transpose()  << std::endl;
   std::cout << "random configuration:\n" << q_random.transpose()  << std::endl;
   std::cout << "relative final error: " << error_final.toVector().norm() << std::endl;
   
+  std::cout << "final norm: " << q_optimization.segment<4>(3).norm() << std::endl;
   return 0;
 }
