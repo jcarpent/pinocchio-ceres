@@ -280,8 +280,9 @@ int main(int /*argc*/, char** argv)
 //  std::cout << "jac_init:\n" << jac_init<< std::endl;
   
 
-  problem.AddParameterBlock(q_optimization.data(), (int)q_optimization.size(), local_para_ptr);
+//  problem.AddParameterBlock(q_optimization.data(), (int)q_optimization.size(), local_para_ptr);
   problem.AddResidualBlock(main_task, NULL, q_optimization.data());
+  problem.SetParameterization(q_optimization.data(), local_para_ptr);
 
   for(int k = 0; k < model.nq; ++k)
   {
@@ -319,6 +320,7 @@ int main(int /*argc*/, char** argv)
   gradient_checker.Probe(parameter_blocks.data(), 1e3*std::sqrt(numeric_diff_options.relative_step_size), &results);
   std::cout << "gradient_checker log:" << results.error_log << std::endl;
 
+  /// Solve the problem
   Solver::Summary summary;
   Solve(options, &problem, &summary);
 
@@ -334,6 +336,8 @@ int main(int /*argc*/, char** argv)
   std::cout << "distance to lower bound:\n" << se3::difference(model,q_optimization,model.lowerPositionLimit).transpose() << std::endl;
   std::cout << "distance to upper bound:\n" << se3::difference(model,q_optimization,model.upperPositionLimit).transpose() << std::endl;
 
-  std::cout << "final norm: " << q_optimization.segment<4>(3).norm() << std::endl;
+  if(with_floating_base)
+      std::cout << "final norm: " << q_optimization.segment<4>(3).norm() << std::endl;
+  
   return 0;
 }
