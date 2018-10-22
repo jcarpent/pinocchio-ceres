@@ -69,7 +69,12 @@ namespace pinocchio
       {
         Eigen::Map<const ConfigVectorType> q(x,m_model.nq);
         Eigen::Map<RowMatrixXs> jac(jacobian,m_model.nq,m_model.nv);
-        se3::integrateCoeffWiseJacobian(m_model,q,jac);
+        jac.setZero();
+        
+        ConfigVectorType q_normalized(q);;
+        se3::normalize(m_model,q_normalized);
+        se3::integrateCoeffWiseJacobian(m_model,q_normalized,jac);
+//        std::cout << "jac\n" << jac << std::endl;
         return true;
       }
       
