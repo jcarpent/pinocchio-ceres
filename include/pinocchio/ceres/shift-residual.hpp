@@ -32,8 +32,16 @@ namespace pinocchio
     {
       
       typedef Eigen::VectorXd VectorType;
-      typedef Eigen::MatrixXd MatrixType;
-      typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor> RowMatrixType;
+      
+      /// \brief Default constructor.
+      ShiftResidual(::ceres::CostFunction * cost)
+      : cost(cost)
+      {
+        assert(cost != NULL && "The cost is NULL");
+        *mutable_parameter_block_sizes() = cost->parameter_block_sizes();
+        set_num_residuals(cost->num_residuals());
+        shift_value = Eigen::VectorXd::Zero(cost->num_residuals());
+      }
       
       /// \brief Default constructor with a given shift vector.
       template<typename VectorLike>
@@ -41,8 +49,8 @@ namespace pinocchio
                     const Eigen::MatrixBase<VectorLike> & shift)
       : cost(cost)
       , shift_value(shift)
-      
       {
+        assert(cost != NULL && "The cost is NULL");
         assert(shift_value.size() == cost->num_residuals());
         *mutable_parameter_block_sizes() = cost->parameter_block_sizes();
         set_num_residuals(cost->num_residuals());
