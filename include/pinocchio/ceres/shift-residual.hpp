@@ -35,6 +35,7 @@ namespace pinocchio
       typedef Eigen::MatrixXd MatrixType;
       typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor> RowMatrixType;
       
+      /// \brief Default constructor with a given shift vector.
       template<typename VectorLike>
       ShiftResidual(::ceres::CostFunction * cost,
                     const Eigen::MatrixBase<VectorLike> & shift)
@@ -70,7 +71,10 @@ namespace pinocchio
       
     protected:
 
+      /// \brief The cost residual to shift
       ::ceres::CostFunction * cost;
+      
+      /// \brief The shiffting vector value.
       VectorType shift_value;
 
     }; // ShiftResidual
