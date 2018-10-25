@@ -64,8 +64,11 @@ namespace pinocchio
         
         const bool res = cost->Evaluate(x,residuals,jacobians);
         
-        Eigen::Map<VectorType> residuals_map(residuals,shift_value.size(),1);
-        residuals_map += shift_value;
+        if(residuals != NULL)
+        {
+          Eigen::Map<VectorType> residuals_map(residuals,shift_value.size(),1);
+          residuals_map += shift_value;
+        }
         
         return res;
       }
