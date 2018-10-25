@@ -56,6 +56,7 @@ namespace pinocchio
         set_num_residuals(cost->num_residuals());
       }
       
+      /// \brief Evaluates the cost function with a constant shift on the residual.
       bool Evaluate(double const* const* x,
                     double* residuals,
                     double** jacobians) const
@@ -73,11 +74,14 @@ namespace pinocchio
         return res;
       }
       
+      /// \brief Changes shifted vector value across the iterations.
       template<typename VectorLike>
       void setShiftValue(const Eigen::MatrixBase<VectorLike> & shift_value_new)
       { shift_value = shift_value_new; }
+      /// \returns the current shifted vector value.
       const VectorType & getShiftValue() const { return shift_value; }
       
+      /// \brief Returns the cost term which is shifted.
       const ::ceres::CostFunction * getCost() const { return cost; }
       
     protected:
