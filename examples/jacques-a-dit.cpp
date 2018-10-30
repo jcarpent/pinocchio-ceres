@@ -20,6 +20,7 @@
 #include "ceres/gradient_checker.h"
 
 #include <pinocchio/ceres/local-parameterization.hpp>
+#include <pinocchio/ceres/proximal-configuration-cost.hpp>
 
 #include <pinocchio/spatial/explog.hpp>
 
@@ -34,92 +35,6 @@
 #include <pinocchio/algorithm/rnea.hpp>
 #include <pinocchio/algorithm/rnea-derivatives.hpp>
 
-struct ProximalConfigurationCost : ceres::CostFunction
-{
-  typedef double Scalar;
-  enum { Options = 0 };
-  
-  typedef se3::ModelTpl<Scalar,Options> Model;
-  typedef se3::DataTpl<Scalar,Options> Data;
-  
-  typedef se3::SE3Tpl<Scalar,Options> SE3;
-  typedef se3::MotionTpl<Scalar,Options> Motion;
-  typedef Model::ConfigVectorType ConfigVectorType;
-  typedef Model::TangentVectorType TangentVectorType;
-  typedef TangentVectorType ResidualVectorType;
-  typedef Data::MatrixXs JacobianType;
-  
-  template<typename ConfigVectorLike>
-  ProximalConfigurationCost(const se3::Model & model,
-                            const Eigen::MatrixBase<ConfigVectorLike> & q_ref)
-  : model(model)
-  , q(model.nq)
-  , q_ref(q_ref)
-  , jacobian_residual(JacobianType::Zero(model.nv,model.nv))
-  {
-    mutable_parameter_block_sizes()->push_back(model.nq);
-    set_num_residuals(model.nv);
-    jacobian_expressed_relatively_to_the_tangent_ = true;
-  }
-  
-  template<typename ConfigVectorType, typename ResidualVector, typename JacobianType>
-  bool Evaluate(const Eigen::MatrixBase<ConfigVectorType> & q,
-                const Eigen::MatrixBase<ResidualVector> & residual,
-                const Eigen::MatrixBase<JacobianType> & jacobian) const
-  {
-    EIGEN_CONST_CAST(JacobianType,jacobian).diagonal().setOnes();
-    EIGEN_CONST_CAST(ResidualVector,residual) = -se3::difference(model,q,q_ref);
-    
-    return true;
-  }
-  
-  template<typename ConfigVectorType, typename ResidualVector>
-  bool Evaluate(const Eigen::MatrixBase<ConfigVectorType> & q,
-                const Eigen::MatrixBase<ResidualVector> & residual) const
-  {
-    // just call rnea
-    EIGEN_CONST_CAST(ResidualVector,residual) = -se3::difference(model,q,q_ref);
-    
-    return true;
-  }
-  
-  virtual bool Evaluate(double const* const* x,
-                        double* residuals,
-                        double** jacobians) const
-  {
-    assert(x != NULL && "x is NULL");
-    
-    const Eigen::Map<const ConfigVectorType> q_map(x[0],model.nq,1);
-    q = q_map;
-    
-    if(jacobians)
-    {
-      Evaluate(q,res,jacobian_residual);
-      Eigen::Map<ResidualVectorType> residuals_map(residuals,model.nv,1);
-      residuals_map = res;
-      
-      Eigen::Map<EIGEN_PLAIN_ROW_MAJOR_TYPE(JacobianType)>(jacobians[0],model.nv,model.nq).leftCols(model.nv)
-      = jacobian_residual;
-      //      std::cout << "jacobian_residual\n" << jacobian_residual << std::endl;
-    }
-    else
-    {
-      Evaluate(q,res);
-      Eigen::Map<ResidualVectorType> residuals_map(residuals,model.nv,1);
-      residuals_map = res;
-    }
-    
-    return true;
-  }
-  
-  // data
-  const se3::Model & model;
-  
-  mutable ResidualVectorType res;
-  mutable ConfigVectorType q, q_ref;
-  mutable JacobianType jacobian_residual;
-  
-};
 
 struct GravityCompensationTask : ceres::CostFunction
 {
@@ -271,6 +186,7 @@ int main(int /*argc*/, char** argv)
   
   GravityCompensationTask * main_task = new GravityCompensationTask(model);
   const ConfigVectorType q_ref = ConfigVectorType::Zero(model.nq);
+  typedef pinocchio::ceres::ProximalConfigurationCost<Model::Scalar,Model::Options> ProximalConfigurationCost;
   ProximalConfigurationCost * config_cost = new ProximalConfigurationCost(model,q_ref);
   // Evaluate at initial point both the residual and the Jacobian
   GravityCompensationTask::ResidualVectorType res_init(model.nv,1);
@@ -278,7 +194,6 @@ int main(int /*argc*/, char** argv)
   main_task->Evaluate(q_random,res_init,jac_init);
 //  std::cout << "res_init: " << res_init.transpose() << std::endl;
 //  std::cout << "jac_init:\n" << jac_init<< std::endl;
-  
 
 //  problem.AddParameterBlock(q_optimization.data(), (int)q_optimization.size(), local_para_ptr);
   problem.AddResidualBlock(main_task, NULL, q_optimization.data());
@@ -296,10 +211,10 @@ int main(int /*argc*/, char** argv)
   options.minimizer_progress_to_stdout = true;
   options.max_num_iterations = 500;
   options.function_tolerance = 1e-14;
-  options.check_gradients = true;
+  options.check_gradients = false;
   options.parameter_tolerance = 1e-12;
   options.gradient_check_numeric_derivative_relative_step_size = 1e-8;
-  options.gradient_check_relative_precision = 2;
+  options.gradient_check_relative_precision = 10;
   options.trust_region_strategy_type = ceres::DOGLEG;
 //  options.dogleg_type = ceres::SUBSPACE_DOGLEG;
 //  options.logging_type = ceres::PER_MINIMIZER_ITERATION;
@@ -337,7 +252,7 @@ int main(int /*argc*/, char** argv)
   std::cout << "distance to upper bound:\n" << se3::difference(model,q_optimization,model.upperPositionLimit).transpose() << std::endl;
 
   if(with_floating_base)
-      std::cout << "final norm: " << q_optimization.segment<4>(3).norm() << std::endl;
+    std::cout << "final norm: " << q_optimization.segment<4>(3).norm() << std::endl;
   
   return 0;
 }
