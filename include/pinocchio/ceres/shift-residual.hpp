@@ -58,6 +58,16 @@ namespace pinocchio
         set_num_residuals(cost->num_residuals());
       }
       
+      /// \brief Copy constructor.
+      ShiftResidual(const ShiftResidual & other)
+      : cost(other.mutable_cost())
+      , shift_value(other.shift_value)
+      , apply_shift(true)
+      {
+        *mutable_parameter_block_sizes() = other.parameter_block_sizes();
+        set_num_residuals(other.num_residuals());
+      }
+      
       /// \brief Evaluates the cost function with a constant shift on the residual.
       bool Evaluate(double const* const* x,
                     double* residuals,
