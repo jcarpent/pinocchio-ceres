@@ -36,6 +36,7 @@ namespace pinocchio
       /// \brief Default constructor.
       ShiftResidual(::ceres::CostFunction * cost)
       : cost(cost)
+      , apply_shift(true)
       {
         assert(cost != NULL && "The cost is NULL");
         *mutable_parameter_block_sizes() = cost->parameter_block_sizes();
@@ -49,6 +50,7 @@ namespace pinocchio
                     const Eigen::MatrixBase<VectorLike> & shift)
       : cost(cost)
       , shift_value(shift)
+      , apply_shift(true)
       {
         assert(cost != NULL && "The cost is NULL");
         assert(shift_value.size() == cost->num_residuals());
@@ -64,6 +66,7 @@ namespace pinocchio
         assert(x != NULL && "x is NULL");
         
         const bool res = cost->Evaluate(x,residuals,jacobians);
+        if(!apply_shift) return res;
         
         if(residuals != NULL)
         {
@@ -84,6 +87,9 @@ namespace pinocchio
       /// \brief Returns the cost term which is shifted.
       const ::ceres::CostFunction * getCost() const { return cost; }
       
+      /// \brief Set the value of the apply_shift variable
+      void applyShift(const bool value) { apply_shift = value; };
+      
     protected:
 
       /// \brief The cost residual to shift
@@ -91,6 +97,9 @@ namespace pinocchio
       
       /// \brief The shiffting vector value.
       VectorType shift_value;
+      
+      /// \brief Variable to consider or not the shift.
+      bool apply_shift;
 
     }; // ShiftResidual
   }
