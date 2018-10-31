@@ -46,6 +46,8 @@ namespace
     Eigen::VectorXd shift_value(Eigen::VectorXd::Zero(m,1));
     ShiftResidual * shift_ptr = new ShiftResidual(lls_ptr,shift_value);
     
+    ASSERT_EQ(shift_ptr->num_residuals(),lls_ptr->num_residuals());
+    
     Eigen::VectorXd x_optimization(x0);
     
     // Build the problem.
@@ -79,6 +81,15 @@ namespace
     
     Solve(options, &problem, &summary);
     ASSERT_TRUE(x_optimization.isApprox(x_optimization_ref));
+    
+    // Deactive shift
+    shift_ptr->applyShift(false);
+    
+    Solve(options, &problem, &summary);
+    Solve(options, &problem_ref, &summary);
+  
+    ASSERT_TRUE(x_optimization.isApprox(x_optimization_ref));
+    
   }
   
 }
