@@ -91,7 +91,6 @@ namespace
     ASSERT_TRUE(res0_prox.isZero());
     ASSERT_TRUE(jac0_prox.isIdentity());
     
-    
     Eigen::VectorXd x_optimization(x0);
     
     // Build the problem.
@@ -143,9 +142,11 @@ namespace
       lls.Evaluate(x_optimization,res);
       std::cout << "res: " << res.transpose() << std::endl;
       std::cout << "evol: " << (x_previous-x_optimization).norm() << std::endl;
-      it++;
       Eigen::VectorXd grad(n,1);
       lls.Gradient(x_optimization,grad);
+      std::cout << "|grad|: " << grad.lpNorm<Eigen::Infinity>() << std::endl;
+      it++;
+     
       if((x_previous-x_optimization).norm() <= tol && grad.norm() <= tol)
       {
         prox_has_congerged = true; break;
