@@ -22,8 +22,6 @@
 #include <pinocchio/ceres/local-parameterization.hpp>
 #include <pinocchio/ceres/proximal-configuration-cost.hpp>
 
-#include <pinocchio/spatial/explog.hpp>
-
 #include <pinocchio/multibody/model.hpp>
 #include <pinocchio/multibody/data.hpp>
 
