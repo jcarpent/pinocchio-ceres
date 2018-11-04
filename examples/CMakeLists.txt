@@ -26,3 +26,6 @@ ADD_EXAMPLE(ceres-hello-world)
 # Examples with Pinocchio
 ADD_EXAMPLE(inverse-geometry)
 PKG_CONFIG_USE_DEPENDENCY(inverse-geometry pinocchio)
+
+ADD_EXAMPLE(jacques-a-dit)
+PKG_CONFIG_USE_DEPENDENCY(jacques-a-dit pinocchio)
