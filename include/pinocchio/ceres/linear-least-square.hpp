@@ -26,7 +26,7 @@ namespace pinocchio
   namespace ceres
   {
     ///
-    /// \brief Proximal term.
+    /// \brief Linear Least Square residual cost function \f$ || Ax - b ||_{2}^{2} \f$.
     ///
     struct LinearLeastSquareResidual : ::ceres::CostFunction
     {
@@ -99,11 +99,11 @@ namespace pinocchio
       }
       
       template<typename MatrixLike>
-      void setA(const Eigen::MatrixBase<MatrixLike> A_new) { A = A_new; }
+      void setA(const Eigen::MatrixBase<MatrixLike> & A_new) { A = A_new; }
       const MatrixType & getA() const { return A; }
       
       template<typename VectorLike>
-      void setb(const Eigen::MatrixBase<VectorLike> b_new) { b = b_new; }
+      void setb(const Eigen::MatrixBase<VectorLike> & b_new) { b = b_new; }
       const VectorType & getb() const { return b; }
       
     protected:
