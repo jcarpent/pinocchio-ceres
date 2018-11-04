@@ -40,6 +40,7 @@ ENDMACRO(ADD_TESTCASE)
 
 # Generic optimization
 ADD_TESTCASE(proximal-cost "eigen3")
+ADD_TESTCASE(quadratic-program "eigen3")
 ADD_TESTCASE(shift-residual "eigen3")
 
 # Pinocchio
