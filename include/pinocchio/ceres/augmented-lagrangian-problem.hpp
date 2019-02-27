@@ -46,7 +46,7 @@ namespace pinocchio
       typedef Eigen::VectorXd VectorType;
       
       typedef std::vector<double*> ParameterBlocksType;
-      typedef se3::container::aligned_vector<ShiftResidual> VectorShiftResidual;
+      typedef pinocchio::container::aligned_vector<ShiftResidual> VectorShiftResidual;
       
       ///
       /// \brief Structure containing the optimal solution of the Augmented Lagrangian solver.

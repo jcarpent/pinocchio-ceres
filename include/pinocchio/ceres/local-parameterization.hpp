@@ -36,8 +36,8 @@ namespace pinocchio
     public:
       typedef _Scalar Scalar;
       enum { Options = _Options };
-      typedef se3::ModelTpl<Scalar,Options> Model;
-      typedef se3::DataTpl<Scalar,Options> Data;
+      typedef pinocchio::ModelTpl<Scalar,Options> Model;
+      typedef pinocchio::DataTpl<Scalar,Options> Data;
       typedef typename Model::ConfigVectorType ConfigVectorType;
       typedef typename Model::TangentVectorType TangentVectorType;
       
@@ -61,7 +61,7 @@ namespace pinocchio
         Eigen::Map<const TangentVectorType> delta_q(delta,m_model.nv);
         
         Eigen::Map<ConfigVectorType> q_plus(x_plus_delta,m_model.nq);
-        q_plus = se3::integrate(m_model,q,delta_q);
+        q_plus = pinocchio::integrate(m_model,q,delta_q);
         return true;
       }
       
@@ -72,8 +72,8 @@ namespace pinocchio
         jac.setZero();
         
         ConfigVectorType q_normalized(q);;
-        se3::normalize(m_model,q_normalized);
-        se3::integrateCoeffWiseJacobian(m_model,q_normalized,jac);
+        pinocchio::normalize(m_model,q_normalized);
+        pinocchio::integrateCoeffWiseJacobian(m_model,q_normalized,jac);
 //        std::cout << "jac\n" << jac << std::endl;
         return true;
       }

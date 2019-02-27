@@ -39,17 +39,17 @@ struct GravityCompensationTask : ceres::CostFunction
   typedef double Scalar;
   enum { Options = 0 };
   
-  typedef se3::ModelTpl<Scalar,Options> Model;
-  typedef se3::DataTpl<Scalar,Options> Data;
+  typedef pinocchio::ModelTpl<Scalar,Options> Model;
+  typedef pinocchio::DataTpl<Scalar,Options> Data;
   
-  typedef se3::SE3Tpl<Scalar,Options> SE3;
-  typedef se3::MotionTpl<Scalar,Options> Motion;
+  typedef pinocchio::SE3Tpl<Scalar,Options> SE3;
+  typedef pinocchio::MotionTpl<Scalar,Options> Motion;
   typedef Model::ConfigVectorType ConfigVectorType;
   typedef Model::TangentVectorType TangentVectorType;
   typedef TangentVectorType ResidualVectorType;
   typedef Data::MatrixXs JacobianType;
 
-  GravityCompensationTask(const se3::Model & model)
+  GravityCompensationTask(const pinocchio::Model & model)
   : model(model)
   , own_data(model)
   , q(model.nq)
@@ -65,7 +65,7 @@ struct GravityCompensationTask : ceres::CostFunction
                 const Eigen::MatrixBase<ResidualVector> & residual,
                 const Eigen::MatrixBase<JacobianType> & jacobian) const
   {
-    se3::computeGeneralizedGravityDerivatives(model,own_data,q,EIGEN_CONST_CAST(JacobianType,jacobian));
+    pinocchio::computeGeneralizedGravityDerivatives(model,own_data,q,EIGEN_CONST_CAST(JacobianType,jacobian));
     EIGEN_CONST_CAST(ResidualVector,residual) = own_data.g;
 
     return true;
@@ -77,7 +77,7 @@ struct GravityCompensationTask : ceres::CostFunction
   {
     // just call rnea
     EIGEN_CONST_CAST(ResidualVector,residual)
-    = se3::computeGeneralizedGravity(model, own_data, q);
+    = pinocchio::computeGeneralizedGravity(model, own_data, q);
     
     return true;
   }
@@ -112,8 +112,8 @@ struct GravityCompensationTask : ceres::CostFunction
   }
   
   // data
-  const se3::Model & model;
-  mutable se3::Data own_data;
+  const pinocchio::Model & model;
+  mutable pinocchio::Data own_data;
   
   mutable ResidualVectorType res;
   mutable ConfigVectorType q;
@@ -133,7 +133,7 @@ int main(int /*argc*/, char** argv)
   using ceres::Solver;
   using ceres::Solve;
   
-  using namespace se3;
+  using namespace pinocchio;
   
   typedef double Scalar;
   typedef Eigen::Matrix<Scalar,Eigen::Dynamic,1> ConfigVectorType;
@@ -152,12 +152,12 @@ int main(int /*argc*/, char** argv)
   std::cout << "Opening model: " << filename << std::endl;
   if(with_floating_base)
   {
-    se3::urdf::buildModel(filename, se3::JointModelFreeFlyer(), model);
+    pinocchio::urdf::buildModel(filename, pinocchio::JointModelFreeFlyer(), model);
     model.lowerPositionLimit.head<7>().fill(-1.1);
     model.upperPositionLimit.head<7>().fill( 1.1);
   }
   else
-    se3::urdf::buildModel(filename, model);
+    pinocchio::urdf::buildModel(filename, model);
   
   std::cout << "model.nq: " << model.nq << "; model.nv: " << model.nv << std::endl;
   
@@ -246,8 +246,8 @@ int main(int /*argc*/, char** argv)
   std::cout << "random initial configuration:\n" << q_random.transpose()  << std::endl;
   std::cout << "final residual: " << residual_final.squaredNorm() << std::endl;
   std::cout << "optimal configuration:\n" << q_optimization.transpose()  << std::endl;
-  std::cout << "distance to lower bound:\n" << se3::difference(model,q_optimization,model.lowerPositionLimit).transpose() << std::endl;
-  std::cout << "distance to upper bound:\n" << se3::difference(model,q_optimization,model.upperPositionLimit).transpose() << std::endl;
+  std::cout << "distance to lower bound:\n" << pinocchio::difference(model,q_optimization,model.lowerPositionLimit).transpose() << std::endl;
+  std::cout << "distance to upper bound:\n" << pinocchio::difference(model,q_optimization,model.upperPositionLimit).transpose() << std::endl;
 
   if(with_floating_base)
     std::cout << "final norm: " << q_optimization.segment<4>(3).norm() << std::endl;

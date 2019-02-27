@@ -35,7 +35,7 @@ namespace
     typedef LocalParameterization::Data Data;
     
     Model model;
-    se3::buildModels::humanoidSimple(model);
+    pinocchio::buildModels::humanoidSimple(model);
     
     LocalParameterization local_para(model);
     ASSERT_EQ(local_para.GlobalSize(),model.nq);
@@ -46,10 +46,10 @@ namespace
     
     model.lowerPositionLimit.head<7>().fill(-1.);
     model.upperPositionLimit.head<7>().fill(1.);
-    ConfigVectorType q = se3::randomConfiguration(model);
+    ConfigVectorType q = pinocchio::randomConfiguration(model);
     TangentVectorType v = TangentVectorType::Random(model.nv,1);
     
-    ConfigVectorType q_plus_ref = se3::integrate(model,q,v);
+    ConfigVectorType q_plus_ref = pinocchio::integrate(model,q,v);
     ConfigVectorType q_plus(model.nq,1);
     local_para.Plus(q.data(),v.data(),q_plus.data());
     ASSERT_TRUE(q_plus.isApprox(q_plus_ref));
@@ -67,7 +67,7 @@ namespace
     for(int k = 0; k < model.nv; ++k)
     {
       v_eps[k] = eps;
-      ConfigVectorType q_plus = se3::integrate(model,q,v_eps);
+      ConfigVectorType q_plus = pinocchio::integrate(model,q,v_eps);
       jac_fd.col(k) = (q_plus - q)/eps;
       v_eps[k] = 0.;
     }
@@ -87,7 +87,7 @@ namespace
     
     Model model;
     const std::string filename = MODEL_DIRECTORY"/lwr-robot-description/lwr-robot.urdf";
-    se3::urdf::buildModel(filename,model);
+    pinocchio::urdf::buildModel(filename,model);
     
     LocalParameterization local_para(model);
     ASSERT_EQ(local_para.GlobalSize(),model.nq);
@@ -97,10 +97,10 @@ namespace
     typedef Model::ConfigVectorType ConfigVectorType;
     typedef Model::TangentVectorType TangentVectorType;
     
-    ConfigVectorType q = se3::randomConfiguration(model);
+    ConfigVectorType q = pinocchio::randomConfiguration(model);
     TangentVectorType v = TangentVectorType::Random(model.nv,1);
     
-    ConfigVectorType q_plus_ref = se3::integrate(model,q,v);
+    ConfigVectorType q_plus_ref = pinocchio::integrate(model,q,v);
     ConfigVectorType q_plus(model.nq,1);
     local_para.Plus(q.data(),v.data(),q_plus.data());
     ASSERT_TRUE(q_plus.isApprox(q_plus_ref));
@@ -118,7 +118,7 @@ namespace
     for(int k = 0; k < model.nv; ++k)
     {
       v_eps[k] = eps;
-      ConfigVectorType q_plus = se3::integrate(model,q,v_eps);
+      ConfigVectorType q_plus = pinocchio::integrate(model,q,v_eps);
       jac_fd.col(k) = (q_plus - q)/eps;
       v_eps[k] = 0.;
     }

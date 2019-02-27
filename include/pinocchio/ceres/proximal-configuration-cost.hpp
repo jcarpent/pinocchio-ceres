@@ -40,8 +40,8 @@ namespace pinocchio
       typedef _Scalar Scalar;
       enum { Options = _Options };
       
-      typedef se3::ModelTpl<Scalar,Options> Model;
-      typedef se3::DataTpl<Scalar,Options> Data;
+      typedef pinocchio::ModelTpl<Scalar,Options> Model;
+      typedef pinocchio::DataTpl<Scalar,Options> Data;
       
       typedef typename Model::ConfigVectorType ConfigVectorType;
       typedef typename Model::TangentVectorType TangentVectorType;
@@ -76,7 +76,7 @@ namespace pinocchio
                     const Eigen::MatrixBase<ResidualVector> & residual) const
       {
         // just call rnea
-        EIGEN_CONST_CAST(ResidualVector,residual) = se3::difference(model,q_ref,q);
+        EIGEN_CONST_CAST(ResidualVector,residual) = pinocchio::difference(model,q_ref,q);
         
         return true;
       }
