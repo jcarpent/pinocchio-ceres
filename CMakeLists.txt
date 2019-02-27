@@ -37,9 +37,11 @@ SET(CMAKE_VERBOSE_MAKEFILE True)
 
 SETUP_PROJECT()
 
+# ----------------------------------------------------
 # --- OPTIONS ----------------------------------------
-OPTION (INITIALIZE_WITH_NAN "Initialize Eigen entries with NaN" OFF)
-OPTION (BUILD_PYTHON_INTERFACE "Build the python binding" ON) 
+# ----------------------------------------------------
+OPTION(INITIALIZE_WITH_NAN "Initialize Eigen entries with NaN" OFF)
+OPTION(BUILD_PYTHON_INTERFACE "Build the python binding" ON) 
 
 IF(INITIALIZE_WITH_NAN)
   MESSAGE (STATUS "Initialize with NaN all the Eigen entries.")
